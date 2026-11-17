@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="format-detection" content="telephone=no">
+<title>手机拍卷</title>
+<style>
+:root{--line:#d3d8e0;--ink:#1c2230;--mut:#6b7686;--ok:#1c8b4a;--bad:#c62b2b;--bg:#eef1f5;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.5 "等线","Microsoft YaHei",sans-serif;padding-bottom:26px}
+header{position:sticky;top:0;z-index:9;background:#25415f;color:#fff;padding:8px 12px}
+header .t{font-weight:700;display:flex;align-items:center;gap:8px}
+header .t b{font-size:17px}
+.chip{font-size:12px;background:#3a5f86;border-radius:12px;padding:1px 8px}
+.net{margin-left:auto;font-size:12px;border-radius:12px;padding:1px 8px;background:#5a6b7d}
+.net.on{background:var(--ok)}.net.off{background:var(--bad)}
+.srv{font-size:12px;color:#b9cbe0;word-break:break-all;margin-top:2px}
+.srv a{color:#fff;text-decoration:underline}
+nav{display:flex;position:sticky;top:52px;z-index:8;background:#fff;border-bottom:1px solid var(--line)}
+nav button{flex:1;border:0;background:#fff;padding:11px 0;font-size:15px;color:var(--mut);font-family:inherit}
+nav button.on{color:#1c5fbf;font-weight:700;box-shadow:inset 0 -3px 0 #1c5fbf}
+nav i{font-style:normal;font-size:12px;background:var(--bad);color:#fff;border-radius:9px;padding:0 6px}
+main{padding:10px}
+section{display:none}section.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+label.fl{font-size:13px;color:var(--mut);min-width:3.2em}
+select,input[type=text]{flex:1;min-width:0;border:1px solid var(--line);border-radius:6px;
+  padding:9px 8px;font:15px "等线","Microsoft YaHei",sans-serif;background:#fff;color:var(--ink)}
+button.btn{border:1px solid #1c5fbf;background:#1c5fbf;color:#fff;border-radius:6px;
+  padding:11px 14px;font-size:15px;font-family:inherit}
+button.btn.ghost{background:#fff;color:#1c5fbf}
+button.btn.gray{background:#fff;border-color:var(--line);color:var(--mut)}
+button.btn.big{width:100%;padding:15px;font-size:17px;font-weight:700}
+button.btn:disabled{opacity:.45}
+label.filebtn{display:block;text-align:center;position:relative;overflow:hidden}
+label.filebtn input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+.hint{font-size:13px;color:var(--mut);margin:6px 0 0}
+.hint.warn{color:#a8630b}
+.hint.bad{color:var(--bad)}
+.hint.ok{color:var(--ok)}
+ul.pg{list-style:none;margin:8px 0 0;padding:0}
+ul.pg li{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line);padding:7px 0}
+ul.pg img{width:44px;height:56px;object-fit:cover;border:1px solid var(--line);border-radius:3px;background:#dde3ea}
+ul.pg .no{font-weight:700;min-width:2.6em}
+ul.pg .info{flex:1;min-width:0;font-size:13px;color:var(--mut);overflow:hidden}
+ul.pg .info b{display:block;color:var(--ink);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ul.pg .op{display:flex;gap:4px}
+ul.pg .op button{border:1px solid var(--line);background:#fff;border-radius:5px;padding:7px 9px;font-size:14px;font-family:inherit;color:#33405a}
+ul.pg .op button.del{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border:1px solid var(--line);padding:5px 4px;text-align:center;word-break:break-all}
+th{background:#f3f5f8;font-weight:700}
+td.nm{font-weight:700}
+td.l{padding-left:8px}
+ul.job{list-style:none;margin:0;padding:0}
+ul.job li{border:1px solid var(--line);border-radius:7px;padding:9px;margin-bottom:9px;background:#fff}
+ul.job .h{display:flex;align-items:center;gap:8px}
+ul.job .h b{font-size:15px}
+ul.job .st{margin-left:auto;font-size:12px;border-radius:10px;padding:1px 8px;background:#5a6b7d;color:#fff}
+ul.job .st.sending{background:#a8630b}ul.job .st.error{background:var(--bad)}
+ul.job .st.queued{background:#1c5fbf}
+ul.job .m{font-size:13px;color:var(--mut);margin-top:3px;word-break:break-all}
+.bar{height:6px;background:#e3e8ef;border-radius:3px;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:#1c5fbf;width:0}
+.chk{display:flex;align-items:center;gap:6px;font-size:14px;border-bottom:1px dashed var(--line);padding:6px 0}
+.chk input{width:20px;height:20px}
+.chk .r{margin-left:auto;font-size:12px;color:var(--mut)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);max-width:90%;
+  background:#25415f;color:#fff;font-size:14px;border-radius:8px;padding:10px 14px;
+  opacity:0;transition:.25s;pointer-events:none;z-index:20;word-break:break-all}
+#toast.show{opacity:1}
+#viewer{position:fixed;inset:0;background:rgba(12,18,26,.92);display:none;z-index:30;padding:14px;overflow:auto}
+#viewer.on{display:block}
+#viewer img{width:100%;border-radius:6px}
+#viewer .x{position:fixed;right:14px;top:10px;color:#fff;font-size:15px;background:#0008;border:0;border-radius:6px;padding:8px 12px;font-family:inherit}
+</style>
+</head>
+<body>
+<header>
+  <div class="t"><b>手机拍卷</b><span class="chip" id="batchTag">批次 -</span>
+    <span class="net" id="netTag">检测中</span></div>
+  <div class="srv" id="srvTag"></div>
+</header>
+
+<nav id="nav">
+  <button data-tab="shoot" class="on">拍卷</button>
+  <button data-tab="queue">队列<i id="qCnt" hidden>0</i></button>
+  <button data-tab="state">已收</button>
+  <button data-tab="grade">判卷</button>
+</nav>
+
+<main>
+  <!-- 拍卷 -->
+  <section id="tab-shoot" class="on">
+    <div class="card">
+      <div class="row"><label class="fl">科目</label><select id="subj"></select></div>
+      <div class="row" style="margin-top:8px">
+        <label class="fl">姓名</label>
+        <input type="text" id="nm" list="nmList" placeholder="输入或从名单选" autocomplete="off">
+        <datalist id="nmList"></datalist>
+        <button class="btn gray" id="btnRoster">名单</button>
+      </div>
+      <div class="hint" id="nmTip"></div>
+      <div id="rosterBox" hidden style="max-height:230px;overflow:auto;margin-top:8px;
+           border:1px solid var(--line);border-radius:6px;padding:4px 8px"></div>
+    </div>
+
+    <div class="card">
+      <div class="grid">
+        <label class="btn filebtn">＋ 拍照<input type="file" id="fCam" accept="image/*"
+               capture="environment" tabindex="-1"></label>
+        <label class="btn ghost filebtn">＋ 选图（可多选）<input type="file" id="fAlbum"
+               accept="image/*" multiple tabindex="-1"></label>
+      </div>
+      <ul class="pg" id="pgList"></ul>
+      <div class="row" style="margin-top:10px"><label class="fl">备注</label>
+        <input type="text" id="note" placeholder="可空，会写进上传记录">
+        <button class="btn gray" id="btnClear">清空</button></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn big" id="btnSend">上传整卷</button>
+      </div>
+      <div class="hint" id="shootTip"></div>
+    </div>
+  </section>
+
+  <!-- 队列 -->
+  <section id="tab-queue">
+    <div class="card">
+      <div class="row">
+        <button class="btn" id="btnPull">取名单</button>
+        <button class="btn gray" id="btnSelf">重新检测</button>
+      </div>
+      <div class="hint" id="selfBox" style="line-height:1.9">正在自检…</div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <button class="btn" id="btnRetry">全部重传</button>
+        <button class="btn gray" id="btnClean">清掉已传完</button>
+      </div>
+      <div class="hint">没网络、电脑没开机时拍的照片都留在队列里，每 15 秒探测一次，
+        电脑一通就接着传。图片存在手机本机数据库里，刷新页面也不会丢。</div>
+      <div class="hint" id="swTip"></div>
+      <div class="hint" id="quota"></div>
+    </div>
+    <ul class="job" id="jobList"></ul>
+  </section>
+
+  <!-- 已收 -->
+  <section id="tab-state">
+    <div class="card"><div class="row">
+      <button class="btn" id="btnState">刷新</button>
+      <span class="hint" id="stateTip" style="margin:0"></span></div></div>
+    <div class="card" style="overflow:auto"><table id="stateTbl"></table></div>
+    <div class="card">
+      <div class="h" style="font-weight:700">本机上传记录</div>
+      <div id="localLog" class="hint">还没有从这台手机传成功的记录。</div>
+    </div>
+  </section>
+
+  <!-- 判卷 -->
+  <section id="tab-grade">
+    <div class="card">
+      <div class="row">
+        <label class="fl">科目</label><select id="gSubj"></select>
+        <button class="btn" id="btnPending">取待判</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn ghost" id="btnAll">全选</button>
+        <button class="btn gray" id="btnNone">全不选</button>
+        <button class="btn big" id="btnGrade" style="flex:1">判卷</button>
+      </div>
+      <div id="pending" style="margin-top:8px"></div>
+      <div class="hint" id="notes"></div>
+    </div>
+    <div class="card" style="overflow:auto"><table id="gradeTbl"></table></div>
+    <div class="hint" id="gradeTip"></div>
+  </section>
+</main>
+
+<div id="toast"></div>
+<div id="viewer"><button class="x" id="vClose">关闭</button><img id="vImg" alt=""></div>
+
+<script>
+/* ---------- 小工具 ---------- */
+var $ = function (s) { return document.querySelector(s); };
+var $$ = function (s, root) { return [].slice.call((root || document).querySelectorAll(s)); };
+function kb(b) { return b > 1048576 ? (b / 1048576).toFixed(1) + 'MB' : Math.round(b / 1024) + 'KB'; }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
+function ts() { var d = new Date(), p = function (n) { return n < 10 ? '0' + n : n; };
+  return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); }
+function hhmm(t) { var d = new Date(t), p = function (n) { return n < 10 ? '0' + n : n; };
+  return (d.getMonth() + 1) + '-' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+function toast(msg, cls) {
+  var t = $('#toast'); t.textContent = msg; t.className = 'show';
+  t.style.background = cls === 'bad' ? '#c62b2b' : '#25415f';
+  setTimeout(function () { t.className = ''; }, 2600);
+}
+/* ---------- 后台地址：手机页可能不在电脑上打开 ----------
+   页面放 GitHub Pages 时 location.origin 是 github.io，后台在局域网里；
+   局域网 IP 又跟着热点重启变。所以地址不当常量：记着上次连通的，
+   连不上就拿缓存里的 host_ips 逐个再试一遍。 */
+var SRV = localStorage.getItem('inbox.server') || '';
+var PROBED = [];                       // 自检面板要列出每条候选的成败
+var NET_ON = false;
+var SW_CACHE = 'panduan-shell-v2';    // 和 _sw.js 里的名字得一致
+
+function isLan(host) {
+  return /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(host || '') ||
+    host === 'localhost';
+}
+function apiUrl(p) { return (SRV || (isLan(location.hostname) ? location.origin : '')) + p; }
+
+/* 电脑状态页会给出带 ?server= 的链接，手机上点一下就不用手动输地址。
+   只收局域网地址：这是往后台直传照片的地址，允许公网主机就等于把卷子送给别人。 */
+function lanOnly(u) {
+  try { var x = new URL(u, location.href); } catch (e) { return ''; }
+  return x.protocol === 'https:' && (isLan(x.hostname) || x.hostname === 'panduan.local')
+    ? x.origin : '';
+}
+(function () {
+  var raw = new URLSearchParams(location.search).get('server');
+  if (!raw) return;
+  var q = lanOnly(raw);
+  if (!q) { toast('链接里的 server 不是局域网 https 地址，已忽略', 'bad'); return; }
+  if (q !== SRV) { SRV = q; localStorage.setItem('inbox.server', SRV); toast('后台地址设为 ' + SRV); }
+})();
+
+function lsGet(k, d) {
+  try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; }
+}
+function lsSet(k, v) {
+  try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; }
+}
+function getJSONAt(url, ms) {
+  var ctl = new AbortController();
+  var timer = setTimeout(function () { ctl.abort(); }, ms || 6000);
+  return fetch(url, { signal: ctl.signal })
+    .then(function (r) {
+      clearTimeout(timer);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }, function (e) { clearTimeout(timer); throw e; });
+}
+function getJSON(path, ms) { return getJSONAt(apiUrl(path), ms); }
+
+function baseList() {
+  var m = lsGet('inbox.meta', null), out = [], seen = {};
+  function add(u) { if (u && !seen[u]) { seen[u] = 1; out.push(u); } }
+  add(SRV);
+  if (isLan(location.hostname)) add(location.origin);
+  if (m) {
+    var p = m.https_port || 8712;
+    (m.host_ips || []).forEach(function (ip) { add('https://' + ip + ':' + p); });
+  }
+  return out;
+}
+function probe() {
+  var list = baseList();
+  if (!list.length) {
+    return Promise.reject(new Error('还不知道电脑地址：先在电脑上打开一次本页，或点“改地址”手输'));
+  }
+  return list.reduce(function (chain, base) {
+    return chain.then(function (hit) {
+      if (hit) return hit;
+      return getJSONAt(base + '/api/meta', 4500).then(function (m) {
+        PROBED.push([base, '通']);
+        return { base: base, meta: m };
+      }, function (e) {
+        PROBED.push([base, '不通：' + String(e && e.message || e)]);
+        return null;
+      });
+    });
+  }, Promise.resolve(null)).then(function (hit) {
+    if (!hit) throw new Error('试过的电脑地址都不通');
+    return hit;
+  });
+}
+
+/* ---------- MD5（服务端要 md5，Web Crypto 不提供） ---------- */
+var MD5_K = (function () {
+  var k = new Int32Array(64);
+  for (var i = 0; i < 64; i++) k[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296);
+  return k;
+})();
+var MD5_S = [7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+             5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+             4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+             6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21];
+function md5Hex(src) {
+  var n = src.length, total = (Math.floor((n + 8) / 64) + 1) * 64;
+  var m = new Uint8Array(total);
+  m.set(src.subarray(0, n));
+  m[n] = 0x80;
+  var bits = n * 8, lo = bits >>> 0, hi = Math.floor(bits / 4294967296) >>> 0;
+  for (var i = 0; i < 4; i++) {
+    m[total - 8 + i] = (lo >>> (8 * i)) & 255;
+    m[total - 4 + i] = (hi >>> (8 * i)) & 255;
+  }
+  var a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+  var M = new Int32Array(16);
+  for (var off = 0; off < total; off += 64) {
+    for (var j = 0; j < 16; j++) {
+      var p = off + j * 4;
+      M[j] = m[p] | (m[p + 1] << 8) | (m[p + 2] << 16) | (m[p + 3] << 24);
+    }
+    var A = a0, B = b0, C = c0, D = d0;
+    for (var t = 0; t < 64; t++) {
+      var F, g;
+      if (t < 16) { F = (B & C) | (~B & D); g = t; }
+      else if (t < 32) { F = (D & B) | (~D & C); g = (5 * t + 1) & 15; }
+      else if (t < 48) { F = B ^ C ^ D; g = (3 * t + 5) & 15; }
+      else { F = C ^ (B | ~D); g = (7 * t) & 15; }
+      F = (F + A + MD5_K[t] + M[g]) | 0;
+      A = D; D = C; C = B;
+      B = (B + ((F << MD5_S[t]) | (F >>> (32 - MD5_S[t])))) | 0;
+    }
+    a0 = (a0 + A) | 0; b0 = (b0 + B) | 0; c0 = (c0 + C) | 0; d0 = (d0 + D) | 0;
+  }
+  var out = '', words = [a0, b0, c0, d0];
+  for (var w = 0; w < 4; w++) {
+    var x = words[w];
+    for (var y = 0; y < 4; y++) out += (((x >>> (8 * y)) & 255) + 0x100).toString(16).slice(1);
+  }
+  return out;
+}
+function md5OfBlob(blob) {
+  return blob.arrayBuffer().then(function (buf) { return md5Hex(new Uint8Array(buf)); });
+}
+
+/* ---------- 本地任务库（离线时图片也要留着） ---------- */
+var DB = null;
+function db() {
+  if (DB) return DB;
+  DB = new Promise(function (res, rej) {
+    var r = indexedDB.open('inbox-queue', 1);
+    r.onupgradeneeded = function () {
+      var d = r.result;
+      if (!d.objectStoreNames.contains('jobs')) d.createObjectStore('jobs', { keyPath: 'id' });
+    };
+    r.onsuccess = function () { res(r.result); };
+    r.onerror = function () { rej(r.error || new Error('数据库打不开')); };
+    r.onblocked = function () { rej(new Error('数据库被别的页面占用，请关掉其它标签')); };
+  });
+  return DB;
+}
+function tx(mode, fn) {
+  return db().then(function (d) {
+    return new Promise(function (res, rej) {
+      var t = d.transaction('jobs', mode), st = t.objectStore('jobs');
+      var q = fn(st);
+      t.oncomplete = function () { res(q && q.result); };
+      t.onerror = function () { rej(t.error || new Error('读写失败')); };
+      t.onabort = function () { rej(t.error || new Error('读写被中断')); };
+    });
+  });
+}
+var jobPut = function (j) { return tx('readwrite', function (s) { s.put(j); }); };
+var jobDel = function (id) { return tx('readwrite', function (s) { s.delete(id); }); };
+var jobAll = function () { return tx('readonly', function (s) { return s.getAll(); }); };
+
+/* ---------- 状态 ---------- */
+var META = null, ROSTER = [], DRAFT = null, LIVE = {}, BUSY = false;
+var MAXB = 64 * 1048576;
+
+function setNet(ok, why) {
+  NET_ON = !!ok;
+  var n = $('#netTag');
+  n.className = 'net ' + (ok ? 'on' : 'off');
+  n.textContent = ok ? '电脑在线' : '电脑离线';
+  n.title = why || '';
+}
+
+function drawSrv() {
+  var r = lsGet('inbox.roster', null);
+  var tail = NET_ON ? '' : (r ? '　<span style="color:#ffd08a">批次名单是 ' +
+    hhmm(r.at) + ' 存的，离线可用</span>' : '');
+  $('#srvTag').innerHTML = (NET_ON ? '后台 ' : '没连上 ') + esc(apiUrl('/') || '(未知)') +
+    '　<a id="editSrv">改地址</a>' + tail;
+  $('#editSrv').onclick = editServer;
+}
+function applyMeta(m) {
+  META = m;
+  $('#batchTag').textContent = '批次 ' + m.batch;
+  MAXB = m.max_body || 64 * 1048576;
+  lsSet('inbox.meta', { batch: m.batch, subjects: m.subjects || [], at: Date.now(),
+                        max_body: m.max_body, https_port: m.https_port, host_ips: m.host_ips });
+  fillSubjects();
+}
+var LOADING = null;
+function loadMeta() {
+  if (LOADING) return LOADING;            /* 心跳和按钮会撞在一起，同一时刻只探一遍 */
+  PROBED = [];
+  LOADING = probe().then(function (hit) {
+    var old = SRV;
+    SRV = hit.base;
+    localStorage.setItem('inbox.server', SRV);
+    if (old && old !== SRV) toast('电脑地址换成 ' + SRV);
+    setNet(true);
+    applyMeta(hit.meta);
+    drawSrv(); renderSelf();
+    LOADING = null;
+    return loadRoster().catch(function () { }).then(renderSelf);
+  }, function (e) {
+    setNet(false, String(e && e.message || e));
+    drawSrv(); renderSelf();
+    LOADING = null;
+    throw e;
+  });
+  return LOADING;
+}
+function editServer() {
+  var v = prompt('后台地址（手机和电脑要在同一个网络，端口看电脑上的启动提示）',
+    SRV || location.origin);
+  if (!v) return;
+  SRV = v.replace(/\/+$/, '');
+  localStorage.setItem('inbox.server', SRV);
+  loadMeta().then(function () { render(); pump(); }, function () { render(); });
+}
+function fillSubjects() {
+  ['#subj', '#gSubj'].forEach(function (sel) {
+    var e = $(sel), keep = e.value;
+    e.innerHTML = (META.subjects || []).map(function (s) {
+      return '<option>' + esc(s) + '</option>';
+    }).join('');
+    if (keep && META.subjects.indexOf(keep) >= 0) e.value = keep;
+  });
+  var saved = localStorage.getItem('inbox.subject');
+  if (saved && META.subjects.indexOf(saved) >= 0) { $('#subj').value = saved; $('#gSubj').value = saved; }
+}
+function fillNameList() {
+  var box = $('#nmList');
+  box.innerHTML = '';
+  var seen = {};
+  ROSTER.forEach(function (x) {
+    if (!seen[x.name]) { seen[x.name] = 1; var o = document.createElement('option'); o.value = x.name; box.appendChild(o); }
+  });
+  renderRosterBox();
+}
+function loadRoster() {
+  return getJSON('/api/roster').then(function (r) {
+    /* 只留拍照用得上的四列：身份证、电话在拍卷这一步没用处，没必要留在手机里 */
+    ROSTER = (r.rows || []).map(function (x) {
+      return { name: x.name, major: x.major, unit: x.unit || '', session: x.session || '' };
+    });
+    lsSet('inbox.roster', { at: Date.now(), rows: ROSTER, subjects: r.subjects || [] });
+    fillNameList();
+  });
+}
+/* 离线打开时靠这两份缓存把科目和名单先摆出来，联网后再刷新 */
+function restoreCache() {
+  var m = lsGet('inbox.meta', null), r = lsGet('inbox.roster', null);
+  /* 科目在两份里都存着：少了一份也不至于下拉框空着、把照片传到没科目的地方 */
+  var sj = ((m && m.subjects) || []).length ? m.subjects : (r && r.subjects) || [];
+  if (!m && !sj.length && !(r && (r.rows || []).length)) return;
+  META = { batch: (m && m.batch) || '未知', subjects: sj, max_body: m && m.max_body };
+  MAXB = (m && m.max_body) || 64 * 1048576;
+  $('#batchTag').textContent = '批次 ' + META.batch + '（存）';
+  fillSubjects();
+  if (r && r.rows) { ROSTER = r.rows; fillNameList(); }
+  drawSrv();
+}
+function rosterBox() {
+  var sj = $('#subj').value, kw = $('#nm').value.trim();
+  return ROSTER.filter(function (x) {
+    return x.major === sj && (!kw || x.name.indexOf(kw) >= 0 || (x.unit || '').indexOf(kw) >= 0);
+  });
+}
+function renderRosterBox() {
+  var rows = rosterBox();
+  $('#rosterBox').innerHTML = rows.length ? rows.map(function (x) {
+    return '<div class="chk" data-nm="' + esc(x.name) + '"><b>' + esc(x.name) + '</b>' +
+      '<span class="r">' + esc(x.unit || '') + '</span></div>';
+  }).join('') : '<div class="hint">名单里没有匹配的人，可以直接手输姓名。</div>';
+  $$('#rosterBox .chk').forEach(function (d) {
+    d.onclick = function () {
+      $('#nm').value = d.getAttribute('data-nm');
+      $('#rosterBox').hidden = true;
+      syncName();
+    };
+  });
+}
+function inRoster(name, sj) {
+  return ROSTER.some(function (x) { return x.name === name && x.major === sj; });
+}
+function syncName() {
+  var nm = $('#nm').value.trim(), sj = $('#subj').value;
+  var tip = $('#nmTip');
+  if (!nm) { tip.className = 'hint'; tip.textContent = '姓名可以点“名单”直接选。'; }
+  else if (!inRoster(nm, sj)) {
+    tip.className = 'hint warn';
+    tip.textContent = '“' + nm + '”不在本批次“' + sj + '”名单里，传过去服务器会提醒，请核对是否写错科目。';
+  } else {
+    var r = ROSTER.filter(function (x) { return x.name === nm && x.major === sj; })[0];
+    tip.className = 'hint ok';
+    tip.textContent = nm + '　' + sj + '　' + (r.unit || '') + '　' + (r.session || '');
+  }
+  renderRosterBox();
+  saveDraft();
+}
+
+/* ---------- 拍卷页：一组待传图片 ---------- */
+function newDraft() {
+  return { id: 'draft', kind: 'draft', subject: $('#subj').value, name: $('#nm').value.trim(),
+    note: $('#note').value.trim(), files: [], status: 'draft' };
+}
+function addFiles(list) {
+  var files = [].slice.call(list).filter(function (f) { return /^image\//.test(f.type) || /\.(jpe?g|png)$/i.test(f.name); });
+  if (!files.length) { toast('没选中图片'); return Promise.resolve(); }
+  var base = DRAFT.files.length;
+  files.forEach(function (f, i) {
+    DRAFT.files.push({ page: base + i + 1, name: f.name || ('p' + (base + i + 1) + '.jpg'),
+      size: f.size, type: f.type, md5: '', blob: f, url: URL.createObjectURL(f), dim: '', busy: true });
+  });
+  renderShoot();
+  return fillMissing();
+}
+/* 新拍的算一遍，从数据库恢复的草稿（没有 md5）也补算一遍 */
+function fillMissing() {
+  var todo = DRAFT.files.filter(function (f) { return !f.md5 || f.md5 === '!'; });
+  if (!todo.length) { renderShoot(); return Promise.resolve(); }
+  todo.forEach(function (f) { f.busy = true; });
+  return Promise.all(todo.map(function (f) {
+    return md5OfBlob(f.blob).then(function (h) {
+      f.md5 = h; f.busy = false;
+      return new Promise(function (res) {
+        if (f.dim || !f.url) return res();
+        var im = new Image();
+        im.onload = function () { f.dim = im.naturalWidth + '×' + im.naturalHeight; res(); };
+        im.onerror = res;
+        im.src = f.url;
+      });
+    }, function (e) {
+      f.busy = false; f.md5 = '!';
+      toast('第' + f.page + '页算 md5 失败，请删掉重拍', 'bad');
+    });
+  })).then(function () { renderShoot(); saveDraft(); });
+}
+function renumber() {
+  DRAFT.files.forEach(function (f, i) { f.page = i + 1; });
+}
+function moveFile(i, d) {
+  var a = DRAFT.files, j = i + d;
+  if (j < 0 || j >= a.length) return;
+  var t = a[i]; a[i] = a[j]; a[j] = t;
+  renumber(); renderShoot(); saveDraft();
+}
+function delFile(i) {
+  var f = DRAFT.files[i];
+  if (f && f.url) URL.revokeObjectURL(f.url);
+  DRAFT.files.splice(i, 1);
+  renumber(); renderShoot(); saveDraft();
+}
+function totalBytes() { return DRAFT.files.reduce(function (s, f) { return s + f.size; }, 0); }
+
+function saveDraft() {
+  if (!DRAFT) return Promise.resolve();
+  DRAFT.subject = $('#subj').value;
+  DRAFT.name = $('#nm').value.trim();
+  DRAFT.note = $('#note').value.trim();
+  localStorage.setItem('inbox.subject', DRAFT.subject);
+  var snap = { id: 'draft', kind: 'draft', subject: DRAFT.subject, name: DRAFT.name,
+    note: DRAFT.note, status: 'draft', files: DRAFT.files.map(function (f) {
+      return { page: f.page, name: f.name, size: f.size, type: f.type, md5: f.md5, blob: f.blob };
+    }) };
+  return jobPut(snap).catch(function () { });
+}
+function clearDraft(keepName) {
+  DRAFT.files.forEach(function (f) { if (f.url) URL.revokeObjectURL(f.url); });
+  DRAFT.files = [];
+  if (!keepName) { $('#nm').value = ''; $('#note').value = ''; }
+  renderShoot(); saveDraft();
+}
+
+function renderShoot() {
+  var fs = DRAFT ? DRAFT.files : [];
+  $('#pgList').innerHTML = fs.map(function (f, i) {
+    return '<li><img src="' + esc(f.url || '') + '" data-view="' + i + '" alt="">' +
+      '<span class="no">第' + (i + 1) + '页</span>' +
+      '<span class="info"><b>' + esc(f.name) + '</b>' + kb(f.size) +
+      (f.dim ? '　' + f.dim : '') + '　' +
+      (f.busy ? '算 md5…' : (f.md5 === '!' ? '<span style="color:#c62b2b">md5 失败，请删掉重拍</span>'
+        : 'md5 ' + esc(f.md5.slice(0, 8)))) + '</span>' +
+      '<span class="op"><button data-up="' + i + '">↑</button>' +
+      '<button data-dn="' + i + '">↓</button>' +
+      '<button class="del" data-del="' + i + '">删</button></span></li>';
+  }).join('');
+  var tip = $('#shootTip'), n = fs.length, bytes = totalBytes();
+  var lines = ['共 ' + n + ' 页，合计 ' + kb(bytes)];
+  if (bytes > MAXB * 0.9) lines.push('超过单次上限，会自动分 ' +
+    chunkGroups(fs, MAXB * 0.85).length + ' 段上传：第 1 段整卷重传，后面各段补尾页。');
+  var soft = fs.filter(function (f) { return f.dim && Math.min.apply(null, f.dim.split('×').map(Number)) < 900; });
+  if (soft.length) lines.push('第 ' + soft.map(function (f) { return f.page; }).join('、') +
+    ' 页分辨率偏低，可能不是原图，请检查相机设置里的“照片尺寸/质量”。');
+  if (!n) lines.push('“拍照”一次一张，拍完回到这里再点；“选图”可以从相册一次挑多张。');
+  tip.className = 'hint' + (soft.length ? ' warn' : '');
+  tip.innerHTML = lines.map(esc).join('<br>');
+  $('#btnSend').disabled = !n || fs.some(function (f) { return !f.md5 || f.md5 === '!'; });
+  $('#btnSend').textContent = n ? '上传整卷（' + n + ' 页 · ' + kb(bytes) + '）' : '上传整卷';
+  $$('#pgList [data-del]').forEach(function (b) { b.onclick = function () { delFile(+b.getAttribute('data-del')); }; });
+  $$('#pgList [data-up]').forEach(function (b) { b.onclick = function () { moveFile(+b.getAttribute('data-up'), -1); }; });
+  $$('#pgList [data-dn]').forEach(function (b) { b.onclick = function () { moveFile(+b.getAttribute('data-dn'), 1); }; });
+  $$('#pgList [data-view]').forEach(function (b) { b.onclick = function () { view(+b.getAttribute('data-view')); }; });
+}
+function view(i) {
+  var f = DRAFT.files[i];
+  if (!f) return;
+  $('#vImg').src = f.url;
+  $('#viewer').className = 'on';
+}
+
+/* ---------- 上传 ---------- */
+function chunkGroups(files, limit) {
+  var out = [], cur = [], sz = 0;
+  files.forEach(function (f) {
+    if (cur.length && sz + f.size > limit) { out.push(cur); cur = []; sz = 0; }
+    cur.push(f); sz += f.size;
+  });
+  if (cur.length) out.push(cur);
+  return out;
+}
+function manifestFor(job, group, first) {
+  return { subject: job.subject, name: job.name, mode: first ? 'replace' : 'append',
+    note: job.note || '',
+    pages: group.map(function (f, i) {
+      return { page: first ? f.page : i + 1, md5: f.md5, name: f.name };
+    }) };
+}
+function xhrUpload(job, group, first) {
+  return new Promise(function (res, rej) {
+    var fd = new FormData();
+    fd.append('manifest', JSON.stringify(manifestFor(job, group, first)));
+    group.forEach(function (f) { fd.append('photo', f.blob, f.name); });
+    var x = new XMLHttpRequest();
+    x.open('POST', apiUrl('/api/upload'));
+    x.timeout = 600000;
+    x.upload.onprogress = function (e) {
+      if (e.lengthComputable) { LIVE[job.id] = Math.round(e.loaded * 100 / e.total); renderQueue(); }
+    };
+    x.onload = function () {
+      var j;
+      try { j = JSON.parse(x.responseText); } catch (e) { j = { ok: false, errors: ['返回不是 JSON（HTTP ' + x.status + '）'] }; }
+      if (x.status >= 200 && x.status < 300 && j.ok) res(j);
+      else rej(new Error((j.errors || ['HTTP ' + x.status]).join('；')));
+    };
+    x.onerror = function () { rej(new Error('网络中断：手机到电脑的路由不通')); };
+    x.ontimeout = function () { rej(new Error('上传超时（10 分钟）')); };
+    x.onabort = function () { rej(new Error('上传被取消')); };
+    x.send(fd);
+  });
+}
+
+function enqueue() {
+  var sj = $('#subj').value, nm = $('#nm').value.trim();
+  if (!nm) { toast('先填姓名', 'bad'); return; }
+  if (!DRAFT.files.length) { toast('一张照片都没有', 'bad'); return; }
+  if (DRAFT.files.some(function (f) { return !f.md5 || f.md5 === '!'; })) { toast('还有页在算 md5', 'bad'); return; }
+  var id = Date.now();
+  var job = { id: id, kind: 'job', subject: sj, name: nm, note: $('#note').value.trim(),
+    status: 'queued', ts: new Date().toLocaleString(),
+    files: DRAFT.files.map(function (f) {
+      return { page: f.page, name: f.name, size: f.size, type: f.type, md5: f.md5, blob: f.blob };
+    }) };
+  jobPut(job).then(function () {
+    clearDraft(true);
+    renderQueue();
+    toast('已进队列' + (META ? '' : '（现在连不上电脑，会自动重试）'));
+    askSync();
+    pump();
+  }, function (e) { toast('存队列失败：' + e, 'bad'); });
+}
+
+var PUMP_AT = 0;
+
+function waitMs(j) { return j.nextAt && j.nextAt > Date.now() ? j.nextAt - Date.now() : 0; }
+
+function pump() {
+  if (BUSY) return Promise.resolve();
+  return jobAll().then(function (all) {
+    var jobs = (all || []).filter(function (j) { return j.kind === 'job' && j.status !== 'done'; })
+      .sort(function (a, b) { return a.id - b.id; });
+    if (!jobs.length) { holdScreen(false); renderQueue(); return; }
+    var todo = jobs.filter(function (j) { return j.status === 'queued' || j.status === 'error'; });
+    if (!todo.length) { holdScreen(false); askSync(); renderQueue(); return; }
+    var next = todo.filter(function (j) { return !waitMs(j); })[0];
+    if (!next) {
+      /* 全在退避时间里。定个闹钟到点再试；闹钟被系统掐了也不要紧，
+         15 秒一次的巡检同样会走到这里，最多晚 15 秒。 */
+      holdScreen(false); renderQueue();
+      var soonest = Math.min.apply(null, todo.map(waitMs));
+      if (soonest > 0) { clearTimeout(PUMP_AT); PUMP_AT = setTimeout(pump, soonest); }
+      return;
+    }
+    return runJob(next).then(function () { return pump(); });
+  }, function (e) { $('#jobList').innerHTML = '<div class="hint bad">' + esc(String(e)) + '</div>'; });
+}
+
+function runJob(job) {
+  BUSY = true;
+  holdScreen(true);        /* 传图期间屏幕别睡：一睡下去系统就把这条上传掐了 */
+  job.status = 'sending'; job.error = '';
+  return jobPut(job).then(function () { renderQueue(); }).then(function () {
+    var groups = chunkGroups(job.files, MAXB * 0.85);
+    var chain = Promise.resolve();
+    groups.forEach(function (g, i) {
+      chain = chain.then(function () { return xhrUpload(job, g, i === 0); });
+    });
+    return chain.then(function (last) {
+      delete LIVE[job.id];
+      logLocal(job, last);
+      return jobDel(job.id);
+    }, function (e) {
+      delete LIVE[job.id];
+      job.status = 'error'; job.error = String(e && e.message || e);
+      /* 越试不着就越等久：30 秒起，翻倍到 10 分钟封顶。
+         不封顶不等待的话，电脑没开机时队列会把同一批照片一遍遍重传，
+         费电之外还会把收件目录的暂存反复写满。 */
+      job.tries = (job.tries || 0) + 1;
+      job.nextAt = Date.now() + Math.min(30000 * Math.pow(2, job.tries - 1), 600000);
+      return jobPut(job);
+    });
+  }).then(function () { BUSY = false; holdScreen(false); renderQueue(); renderStateLater(); },
+    function () { BUSY = false; holdScreen(false); renderQueue(); });
+}
+
+function logLocal(job, res) {
+  var log = [];
+  try { log = JSON.parse(localStorage.getItem('inbox.log') || '[]'); } catch (e) { }
+  log.unshift({ t: ts(), subject: job.subject, name: job.name, pages: job.files.length,
+    server: (res && res.pages ? res.pages.length : job.files.length),
+    warn: (res && res.warnings && res.warnings.join('；')) || '' });
+  localStorage.setItem('inbox.log', JSON.stringify(log.slice(0, 80)));
+  renderLocalLog();
+}
+function renderLocalLog() {
+  var log = [];
+  try { log = JSON.parse(localStorage.getItem('inbox.log') || '[]'); } catch (e) { }
+  $('#localLog').innerHTML = log.length ? ('<table><tr><th>时间</th><th>科目</th><th>姓名</th>' +
+    '<th>页</th><th>服务器</th></tr>' + log.map(function (x) {
+      return '<tr><td>' + esc(x.t) + '</td><td>' + esc(x.subject) + '</td><td class="nm">' +
+        esc(x.name) + '</td><td>' + x.pages + '</td><td>' + x.server +
+        (x.warn ? '</td><td class="l" style="color:#a8630b">' + esc(x.warn) : '') + '</td></tr>';
+    }).join('') + '</table>') : '还没有从这台手机传成功的记录。';
+}
+
+/* ---------- 队列页 ---------- */
+var ST = { draft: '草稿', queued: '排队中', sending: '上传中', error: '失败' };
+function renderQueue() {
+  return jobAll().then(function (all) {
+    var jobs = (all || []).filter(function (j) { return j.kind === 'job'; })
+      .sort(function (a, b) { return a.id - b.id; });
+    var wait = jobs.filter(function (j) { return j.status !== 'done'; }).length;
+    WAIT = wait;
+    var c = $('#qCnt');
+    c.hidden = !wait; c.textContent = wait;
+    quotaTip();
+    $('#jobList').innerHTML = jobs.length ? jobs.map(function (j) {
+      var pct = LIVE[j.id] || 0, byt = j.files.reduce(function (s, f) { return s + f.size; }, 0);
+      return '<li><div class="h"><b>' + esc(j.name) + '</b><span>' + esc(j.subject) +
+        '</span><span class="st ' + j.status + '">' + (ST[j.status] || j.status) + '</span></div>' +
+        '<div class="m">' + j.files.length + ' 页 · ' + kb(byt) + ' · 入队 ' + esc(j.ts) + '</div>' +
+        (j.status === 'sending' ? '<div class="bar"><i style="width:' + pct + '%"></i></div>' : '') +
+        (j.error ? '<div class="m" style="color:#c62b2b">' + esc(j.error) + '</div>' : '') +
+        (j.status === 'error' && j.nextAt ? '<div class="m">第 ' + (j.tries || 1) +
+          ' 次失败，' + esc(hhmm(j.nextAt)) + ' 自动再试</div>' : '') +
+        '<div class="row" style="margin-top:6px">' +
+        (j.status === 'error' ? '<button class="btn" data-re="' + j.id + '">重传</button>' : '') +
+        '<button class="btn gray" data-drop="' + j.id + '">删除任务</button></div></li>';
+    }).join('') : '<div class="hint">队列是空的。</div>';
+    $$('#jobList [data-re]').forEach(function (b) {
+      b.onclick = function () {
+        var id = +b.getAttribute('data-re');
+        jobAll().then(function (a) {
+          var j = a.filter(function (x) { return x.id === id; })[0];
+          if (!j) return;
+          j.status = 'queued'; j.error = ''; j.tries = 0; delete j.nextAt;
+          jobPut(j).then(pump);
+        });
+      };
+    });
+    $$('#jobList [data-drop]').forEach(function (b) {
+      b.onclick = function () {
+        var id = +b.getAttribute('data-drop');
+        if (!confirm('删掉这个任务？本机图片会一起删掉，已传到电脑的不受影响。')) return;
+        jobDel(id).then(renderQueue);
+      };
+    });
+  }, function () { });
+}
+
+/* ---------- 已收页 ---------- */
+var STATE = null;
+function renderStateLater() { getJSON('/api/state').then(function (s) { STATE = s; drawState(); }, function () { }); }
+function drawState() {
+  var t = $('#stateTbl');
+  if (!STATE) { t.innerHTML = '<tr><td>连不上电脑</td></tr>'; return; }
+  var mine = {};
+  try { JSON.parse(localStorage.getItem('inbox.log') || '[]').forEach(function (x) { mine[x.subject + '/' + x.name] = 1; }); } catch (e) { }
+  var rows = STATE.people.map(function (p) {
+    return '<tr><td>' + esc(p.subject) + '</td><td class="nm">' + esc(p.name) +
+      (mine[p.subject + '/' + p.name] ? ' <span style="color:#1c8b4a">本机</span>' : '') +
+      '</td><td>' + (p.pages.length || '无') + '</td><td>' +
+      (p.gaps.length ? '<span style="color:#c62b2b">' + p.gaps.join('、') + '</span>' : '-') +
+      '</td><td>' + (p.in_roster ? '是' : '<span style="color:#c62b2b">否</span>') +
+      '</td><td>' + (p.judged ? '是' : '未') + '</td></tr>';
+  });
+  t.innerHTML = '<tr><th>科目</th><th>姓名</th><th>页数</th><th>缺页</th><th>在名单</th><th>已判卷</th></tr>' +
+    (rows.join('') || '<tr><td colspan=6>电脑上还没收到卷子图片</td></tr>');
+  $('#stateTip').textContent = '批次 ' + STATE.batch + '　共 ' + STATE.people.length +
+    ' 人　' + ts();
+}
+
+/* ---------- 判卷页 ---------- */
+var PENDING = null;
+function loadPending() {
+  /* 第一批要现算空白模板与题头，可能几分钟，这里不能提前断开 */
+  $('#notes').textContent = '正在查每个人的状态，第一批要算模板，可能要几分钟…';
+  return getJSON('/api/pending', 600000).then(function (p) {
+    PENDING = p;
+    var sj = $('#gSubj').value;
+    var can = p.people.filter(function (x) { return x.subject === sj; });
+    var box = $('#pending');
+    if (!can.length) box.innerHTML = '<div class="hint">' + esc(sj) + ' 还没有收到照片的人。</div>';
+    else box.innerHTML = can.map(function (x) {
+      var why = x.block || (x.judged ? '已判卷，可重判' : '可以判卷');
+      return '<div class="chk"><input type="checkbox" data-name="' + esc(x.name) + '"' +
+        (x.name ? '' : '') + (x.block ? ' disabled' : (x.judged ? '' : ' checked')) + '>' +
+        '<b>' + esc(x.name) + '</b><span class="r">' + x.pages + ' 页　' + esc(why) + '</span></div>';
+    }).join('');
+    $('#notes').innerHTML = (p.notes || []).map(esc).join('<br>') || '没有异常。';
+    toast('取到了');
+  }, function (e) { $('#notes').textContent = '取待判失败：' + (e.message || e); });
+}
+function chosenNames() {
+  return $$('#pending input[type=checkbox]').filter(function (i) { return i.checked; })
+    .map(function (i) { return i.getAttribute('data-name'); });
+}
+function doGrade() {
+  var names = chosenNames(), sj = $('#gSubj').value;
+  if (!names.length) { toast('先勾人要判卷', 'bad'); return; }
+  $('#gradeTip').textContent = '判卷中，几十秒到几分钟，别关页面…';
+  $('#btnGrade').disabled = true;
+  var ctl = new AbortController(), timer = setTimeout(function () { ctl.abort(); }, 3600000);
+  fetch(apiUrl('/api/grade'), {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctl.signal,
+    body: JSON.stringify({ subject: sj, names: names })
+  }).then(function (r) {
+    clearTimeout(timer);
+    $('#btnGrade').disabled = false;
+    return r.json().then(function (j) { return { st: r.status, j: j }; });
+  }, function (e) {
+    clearTimeout(timer); $('#btnGrade').disabled = false;
+    $('#gradeTip').textContent = '判卷请求失败：' + (e.message || e);
+  }).then(function (x) {
+    if (!x) return;
+    var j = x.j;
+    if (x.st === 409) { $('#gradeTip').textContent = '电脑上已经有判卷任务在跑，等它结束。'; return; }
+    if (!j.ok && !j.graded) { $('#gradeTip').textContent = (j.errors || ['失败']).join('；'); return; }
+    var rows = (j.graded || []).map(function (g) {
+      return '<tr><td class="nm">' + esc(g.name) + '</td><td>' + esc(g.score) +
+        '</td><td>' + esc(g.deduct) + '</td><td>' + esc(g.wrong) +
+        '</td><td class="l">' + esc(g.line) + '</td></tr>';
+    });
+    var bad = (j.failed || []).map(function (f) {
+      return '<tr><td class="nm" colspan=5 style="color:#c62b2b;text-align:left">' +
+        esc(typeof f === 'string' ? f : (f.name + '：' + f.error)) + '</td></tr>';
+    });
+    $('#gradeTbl').innerHTML = '<tr><th>姓名</th><th>分数</th><th>倒扣</th><th>错题数</th>' +
+      '<th>判分单</th></tr>' + rows.join('') + bad.join('');
+    $('#gradeTip').textContent = '判完 ' + (j.graded || []).length + ' 人，失败 ' +
+      (j.failed || []).length + ' 人。' + (j.summary ? '汇总：' + j.summary : '');
+    renderStateLater();
+  });
+}
+
+/* ---------- 事件绑定 ---------- */
+function render() {
+  renderShoot();
+  renderQueue();
+  if (META) drawState();
+}
+$('#nav').onclick = function (e) {
+  var b = e.target.closest('button'); if (!b) return;
+  $$('#nav button').forEach(function (x) { x.className = x === b ? 'on' : ''; });
+  $$('main section').forEach(function (s) { s.className = s.id === 'tab-' + b.dataset.tab ? 'on' : ''; });
+  if (b.dataset.tab === 'state') renderStateLater();
+  if (b.dataset.tab === 'queue') renderQueue();
+};
+$('#btnClear').onclick = function () {
+  if (!DRAFT.files.length) return;
+  if (confirm('清空当前 ' + DRAFT.files.length + ' 页？还没上传的就没了。')) clearDraft(false);
+};
+$('#btnSend').onclick = enqueue;
+$('#fCam').onchange = function () { addFiles(this.files); this.value = ''; };
+$('#fAlbum').onchange = function () { addFiles(this.files); this.value = ''; };
+$('#nm').oninput = syncName;
+$('#nm').onblur = syncName;
+$('#subj').onchange = function () {
+  localStorage.setItem('inbox.subject', this.value);
+  syncName();
+};
+$('#btnRoster').onclick = function () {
+  var b = $('#rosterBox');
+  b.hidden = !b.hidden;
+  renderRosterBox();
+};
+/* 出发去考场前点一下：找到电脑、把科目和名单存进手机，之后没网也能选人名 */
+function pull() {
+  renderSelf();
+  toast('正在找电脑…');
+  loadMeta().then(function () {
+    var r = lsGet('inbox.roster', null);
+    toast(r ? '名单存好了：' + r.rows.length + ' 人' : '连上了，但名单是空的');
+    render();
+    pump();
+  }, function (e) { toast('没找到电脑：' + String(e && e.message || e), 'bad'); });
+}
+$('#btnPull').onclick = pull;
+$('#btnSelf').onclick = pull;
+$('#btnRetry').onclick = function () {
+  jobAll().then(function (a) {
+    var bad = a.filter(function (j) { return j.kind === 'job' && j.status === 'error'; });
+    if (!bad.length) { toast('没有失败的任务'); return; }
+    Promise.all(bad.map(function (j) { j.status = 'queued'; j.error = ''; j.tries = 0; delete j.nextAt; return jobPut(j); }))
+      .then(pump);
+  });
+};
+$('#btnClean').onclick = function () {
+  jobAll().then(function (a) {
+    var done = a.filter(function (j) { return j.kind === 'job' && j.status === 'done'; });
+    Promise.all(done.map(function (j) { return jobDel(j.id); })).then(renderQueue);
+    toast('清掉 ' + done.length + ' 条');
+  });
+};
+$('#btnState').onclick = function () { renderStateLater(); renderLocalLog(); };
+$('#btnPending').onclick = loadPending;
+$('#gSubj').onchange = loadPending;
+$('#btnAll').onclick = function () { $$('#pending input').forEach(function (i) { if (!i.disabled) i.checked = true; }); };
+$('#btnNone').onclick = function () { $$('#pending input').forEach(function (i) { i.checked = false; }); };
+$('#btnGrade').onclick = doGrade;
+$('#vClose').onclick = function () { $('#viewer').className = ''; };
+$('#viewer').onclick = function (e) { if (e.target === this) this.className = ''; };
+
+/* ---------- 离线打开与续传（只有装了证书的 https 源才有这些能力） ---------- */
+var SW = null, WL = null, WAIT = 0, WANT = false;
+
+/* 外壳放哪儿都行：电脑上 /app，GitHub Pages 上 /仓库名/。worker 得知道
+   自己是给哪个 URL 兜底，所以注册时把这个页面的路径当参数带过去。 */
+var DIR = location.pathname.replace(/[^/]*$/, '');
+
+function renderSelf() {
+  var el = $('#selfBox');
+  if (!el) return;
+  var r = lsGet('inbox.roster', null), L = [];
+  L.push('本页面源：<b>' + esc(location.origin + DIR) + '</b>' +
+    (isLan(location.hostname) ? '（电脑本机）' : '（外网壳，照片不经过它）'));
+  L.push('电脑后台：' + esc(SRV || '还没找到') +
+    (NET_ON ? ' — <b style="color:#1c8b4a">已连上</b>' : ' — <b style="color:#c62b2b">没连上</b>'));
+  PROBED.filter(function (x) { return x[0] !== SRV || !NET_ON; })
+    .forEach(function (x) { L.push('<span style="color:#8a93a3">· ' + esc(x[0]) + ' → ' + esc(x[1]) + '</span>'); });
+  L.push('离线打开：' + (window.isSecureContext ? '安全上下文 ✓' : '<b style="color:#c62b2b">不是 https，存不下外壳</b>') +
+    '；Service Worker ' + (SW ? '已装' + (SW.active ? '' : '（等下次打开生效）') : '未装') +
+    '；外壳缓存 <span id="shellHit">查…</span>');
+  L.push('名单：' + (r ? '<b>' + r.rows.length + '</b> 人，存于 ' + hhmm(r.at) +
+    (NET_ON ? '' : '（<b style="color:#a8630b">现在用的是这份缓存</b>）') : '本机还没存，到电脑旁边点一次「取名单」') +
+    '；科目：' + esc(((META && META.subjects) || []).join('、') || '无'));
+  L.push('队列、草稿、这台手机的上传记录都存在<b>当前源</b>自己的库里：' +
+    '电脑上打开的 <code>/app</code> 和手机上打开的 Pages 是两本账，一批固定用一边。');
+  if (!NET_ON && !isLan(location.hostname)) {
+    L.push('连不上电脑的常见原因：① 没和电脑连同一个热点；② 电脑没开服务；' +
+      '③ 这台手机没装电脑证书（Pages 的证书是真的，电脑的是自签的，不装就握手失败，' +
+      '表现和断网一样）。');
+  }
+  el.innerHTML = L.join('<br>');
+  if (window.caches) {
+    caches.open(SW_CACHE).then(function (c) {
+      return c.match(location.pathname).then(function (hit) { return hit || c.match(DIR); });
+    }).then(function (hit) {
+      var t = $('#shellHit');
+      if (t) t.innerHTML = hit ? '<b style="color:#1c8b4a">已存</b>' :
+        '<b style="color:#c62b2b">没存</b>（现在联网刷新一次本页就有了）';
+    }, function () { });
+  }
+}
+
+function setupSW() {
+  if (!window.isSecureContext || !('serviceWorker' in navigator)) { renderSelf(); return; }
+  var t = $('#swTip');
+  navigator.serviceWorker.register(DIR + 'sw.js?shell=' + encodeURIComponent(location.pathname),
+    { scope: DIR }).then(function (reg) {
+      SW = reg;
+      if (t) t.textContent = '离线已就绪：电脑没开机也能打开本页拍照入队，传图时屏幕不会睡。' +
+        '（网通了自动续传那一条只有安卓有，苹果要回到页面才会接着传。）';
+      renderSelf();
+      return reg.update();
+    }, function (e) {
+      if (t) t.innerHTML = 'Service Worker 没装上：' + esc(String(e && e.message || e));
+      renderSelf();
+    });
+  navigator.serviceWorker.addEventListener('message', function (e) {
+    if (e.data && e.data.what === 'pump') pump();
+  });
+}
+
+function askSync() {
+  /* 让浏览器在合适的时候把 worker 叫醒，worker 再回头叫页面传 */
+  if (SW && SW.sync) SW.sync.register('pump').catch(function () {});
+}
+
+function holdScreen(on) {
+  WANT = on;
+  if (!window.navigator.wakeLock) return;
+  if (!on) {
+    if (WL) { WL.release().catch(function () {}); WL = null; }
+    return;
+  }
+  if (WL || document.hidden) return;                  /* 已经有锁，或看不见时申请了也白申请 */
+  navigator.wakeLock.request('screen').then(function (lock) {
+    if (!WANT) { lock.release().catch(function () {}); return; }  /* 传完了才批下来：立刻还回去 */
+    WL = lock;
+    lock.addEventListener('release', function () {
+      WL = null;
+      if (WANT && !document.hidden) holdScreen(true); /* 系统收了锁，回到前台再补一次 */
+    });
+  }, function () {});
+}
+
+function quotaTip() {
+  if (!navigator.storage || !navigator.storage.estimate) return;
+  navigator.storage.estimate().then(function (es) {
+    var pct = es.quota ? Math.round(es.usage / es.quota * 100) : 0;
+    var el = $('#quota');
+    if (!el) return;
+    el.textContent = '手机里已存 ' + kb(es.usage) + '，约占可用配额 ' + pct + '%';
+    el.className = 'hint' + (pct > 80 ? ' bad' : '');
+    if (pct > 90) toast('手机存储快满了，先清掉队列里已传完的任务', 'bad');
+  }, function () {});
+}
+
+/* 传的时候别误关页面：队列还在，重开也是从缓存起，照片不丢，但得再点一次续传 */
+window.addEventListener('beforeunload', function (e) {
+  if (!BUSY && !WAIT) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
+/* ---------- 启动 ---------- */
+DRAFT = newDraft();
+renderLocalLog();
+restoreCache();          /* 先把存好的科目名单摆上，没网也能选人拍照 */
+renderSelf();
+jobAll().then(function (a) {
+  /* 上次页面被关掉时正在传的记录会停在 sending，先放回队列 */
+  var hung = (a || []).filter(function (j) { return j.kind === 'job' && j.status === 'sending'; });
+  hung.forEach(function (j) { j.status = 'queued'; j.error = ''; });
+  return Promise.all(hung.map(function (j) { return jobPut(j); })).then(function () {
+    if (hung.length) toast('有 ' + hung.length + ' 个上次没传完，已放回队列');
+    var d = (a || []).filter(function (j) { return j.kind === 'draft'; })[0];
+    if (d && d.files && d.files.length) {
+      d.files.forEach(function (f) { f.url = URL.createObjectURL(f.blob); f.dim = ''; });
+      DRAFT = d;
+      if (d.subject) $('#subj').value = d.subject;
+      $('#nm').value = d.name || '';
+      $('#note').value = d.note || '';
+      toast('恢复了上次没传完的 ' + d.files.length + ' 页');
+      fillMissing();
+    }
+    render();
+  });
+}, function (e) { render(); toast('本机数据库不可用，关掉网页草稿会丢：' + e, 'bad'); });
+
+loadMeta().then(function () { render(); pump(); }, function () { render(); renderQueue(); });
+renderStateLater();
+setupSW();
+/* 回到前台第一件事：先续传，再把传图时该亮的屏幕补回来 */
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden) { pump(); if (BUSY) holdScreen(true); }
+});
+setInterval(function () {
+  if (BUSY) return;
+  getJSON('/api/meta', 5000).then(function (m) {
+    setNet(true);
+    if (!META || m.batch !== META.batch) loadMeta().then(render, function () { });
+    else pump();
+  }, function (e) {
+    setNet(false, String(e && e.message || e));
+    if (WAIT) askSync();     /* 现在不通：挂个后台同步，网通了由浏览器把页面叫醒 */
+    /* 热点重启会换 IP，光盯着手上这个地址不够，回头把缓存里的候选都再试一遍 */
+    loadMeta().catch(function () { });
+  });
+}, 15000);
+</script>
+</body>
+</html>
