@@ -964,7 +964,15 @@ function renderSelf() {
   L.push('电脑后台：' + esc(SRV || '还没找到') +
     (NET_ON ? ' — <b style="color:#1c8b4a">已连上</b>' : ' — <b style="color:#c62b2b">没连上</b>'));
   PROBED.filter(function (x) { return x[0] !== SRV || !NET_ON; })
-    .forEach(function (x) { L.push('<span style="color:#8a93a3">· ' + esc(x[0]) + ' → ' + esc(x[1]) + '</span>'); });
+    .forEach(function (x) {
+      /* JS 里证书不受信和真没网都只回一句 Failed to fetch，分不出来。
+         让人拿浏览器直接开一次：弹"不是私密连接"是证书，转圈/拒绝连接是网络。 */
+      var m = /^https:\/\/([^:/]+):(\d+)/.exec(x[0]);
+      L.push('<span style="color:#8a93a3">· ' + esc(x[0]) + ' → ' + esc(x[1]) +
+        '　<a href="' + esc(x[0] + '/api/meta') + '" target="_blank">直接打开看看</a>' +
+        (m ? '　<a href="http://' + esc(m[1]) + ':' + (+m[2] - 1) + '/cert">装证书</a>' : '') +
+        '</span>');
+    });
   L.push('离线打开：' + (window.isSecureContext ? '安全上下文 ✓' : '<b style="color:#c62b2b">不是 https，存不下外壳</b>') +
     '；Service Worker ' + (SW ? '已装' + (SW.active ? '' : '（等下次打开生效）') : '未装') +
     '；外壳缓存 <span id="shellHit">查…</span>');
@@ -976,7 +984,11 @@ function renderSelf() {
   if (!NET_ON && !isLan(location.hostname)) {
     L.push('连不上电脑的常见原因：① 没和电脑连同一个热点；② 电脑没开服务；' +
       '③ 这台手机没装电脑证书（Pages 的证书是真的，电脑的是自签的，不装就握手失败，' +
-      '表现和断网一样）。');
+      '表现和断网一样）。分不清就点上面那条「直接打开看看」：' +
+      '出「不是私密连接」是差证书（点 高级 → 继续访问，能看到一串英文字母就算通了），' +
+      '一直转圈或「拒绝连接」是没走到电脑。' +
+      '差证书就点「装证书」下来那个文件，装的路子是 设置 → 安全 → 更多安全设置 → ' +
+      '加密与凭据 → 安装证书 → CA 证书；装完回本页下拉刷新再「重新检测」。');
   }
   el.innerHTML = L.join('<br>');
   if (window.caches) {
@@ -1087,7 +1099,10 @@ setInterval(function () {
   if (BUSY) return;
   getJSON('/api/meta', 5000).then(function (m) {
     setNet(true);
-    if (!META || m.batch !== META.batch) loadMeta().then(render, function () { });
+    /* 手机先打开、电脑后开是常事，光比批次比不出这种"在线却一片空白"：
+       电脑说这批有六个人而手机一个都没有，就再去取一遍 */
+    var gap = !META || !(META.subjects || []).length || (m.roster_count || 0) > ROSTER.length;
+    if (gap || m.batch !== META.batch) loadMeta().then(render, function () { });
     else pump();
   }, function (e) {
     setNet(false, String(e && e.message || e));
